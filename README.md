@@ -2,7 +2,7 @@
 This project is a 2D mini space shooter game built with Python and Pygame. Players control a spaceship, shoot asteroids, and avoid them to survive and score points.  
 
 # Team Members: 
-Joshua Velasquez
+Joshua Velasquez,
 Jonathan Yalew
 
 # Technologies Used: 
