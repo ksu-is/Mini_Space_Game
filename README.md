@@ -6,8 +6,9 @@ Joshua Velasquez,
 Jonathan Yalew
 
 # Technologies Used: 
-Python 3.13
-GitHub for version control
+- Python 3.13,
+- GitHub for version control
+- Pygame Library
 
 # Goals:
 - Create a simple but engaging 2D game.
