@@ -1,3 +1,4 @@
+#Importing necessary modules
 import pygame # Importing pygame for game development
 import random # Importing random module for enemy positions and movements
 import os # Importing os module to load files from assets folder
