@@ -22,7 +22,7 @@ bg_y2 = -HEIGHT #Allows two copies of background to move seamlessly
 
 
 # Adding the game loop
-running = True
+running = True #Runs the game loop
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -34,11 +34,11 @@ while running:
     screen.blit(background, (0, bg_y2)) #Drawing scrolling background
 
 
-    bg_y1 += 2
+    bg_y1 += 2 
     bg_y2 += 2 #Moving background downwards
 
 
-    if bg_y1 >= HEIGHT:
+    if bg_y1 >= HEIGHT: #Resetting background position
         bg_y1 = -HEIGHT
     if bg_y2 >= HEIGHT:
         bg_y2 = -HEIGHT # Creating Scroll loop
