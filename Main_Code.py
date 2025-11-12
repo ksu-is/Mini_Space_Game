@@ -80,5 +80,5 @@ while running:
     screen.blit(player_img, player_rect)
 
     pygame.display.update() #Updating display with new background positions
-pygame.quit()
+pygame.quit() 
 
