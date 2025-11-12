@@ -44,5 +44,5 @@ while running:
         bg_y2 = -HEIGHT # Creating Scroll loop
 
     pygame.display.update() #Updating display with new background positions
-pygame.quit()
+pygame.quit() 
 
