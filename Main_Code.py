@@ -22,7 +22,7 @@ bg_y2 = -HEIGHT #Allows two copies of background to move seamlessly
 
 
 # Adding the game loop
-running = True #Runs the game loop
+running = True #This runs the game loop
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
