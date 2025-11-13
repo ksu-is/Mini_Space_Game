@@ -13,16 +13,15 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame. display.set_caption("Space Shooter")
 
 
-#Setting up momving background
-# Setting up moving background
+# Setting up the background
 background = pygame.image.load(os.path.join("Assets", "Background.png")) # Loading background image from Assets folder
 background = pygame.transform.scale(background, (WIDTH, HEIGHT)) # Scaling background image to fit game window
 
 bg_y1 = 0 
 bg_y2 = -HEIGHT #Allows two copies of background to move seamlessly
 
-# ---- Player / spaceship setup ----
-# Load player image and create rect
+# Adding player spaceship
+# Load player image and create rectangle
 player_img = pygame.image.load(os.path.join("Assets", "Player.png")).convert_alpha()
 # Optionally scale player
 player_img = pygame.transform.scale(player_img, (64, 64))
@@ -55,7 +54,7 @@ while running:
     if bg_y2 >= HEIGHT:
         bg_y2 = -HEIGHT # Creating Scroll loop
 
-    # ----- Player input and movement -----
+    # Setting up player movement
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
         player_rect.x -= player_speed
@@ -66,7 +65,7 @@ while running:
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
         player_rect.y += player_speed
 
-    # Constrain player to screen
+    # Adding boundaries to player movement
     if player_rect.left < 0:
         player_rect.left = 0
     if player_rect.right > WIDTH:
@@ -76,7 +75,7 @@ while running:
     if player_rect.bottom > HEIGHT:
         player_rect.bottom = HEIGHT
 
-    # Draw player
+    # Drawing player 
     screen.blit(player_img, player_rect)
 
     pygame.display.update() #Updating display with new background positions
