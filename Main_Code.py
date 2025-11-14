@@ -1,53 +1,69 @@
-#Importing necessary modules
+# 1. Module Imports
 import pygame # Importing pygame for game development
 import random # Importing random module for enemy positions and movements
 import os # Importing os module to load files from assets folder
 
+#2. Initializers
 pygame.init() # This line starts the pygame module
+pygame.mixer.init() # This line starts the mixer module for sound effects
 
-# Setting up the game window dimensions and title
+# 3. Setting up the game window dimensions and title
 WIDTH = 800
 HEIGHT = 600
-
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame. display.set_caption("Space Shooter")
 
-
-# Setting up the background
-background = pygame.image.load(os.path.join("Assets", "Background.png")) # Loading background image from Assets folder
+# 4. Asset Loading
+background = pygame.image.load(os.path.join("Assets", "Background.png")) # Loading Background Asset
 background = pygame.transform.scale(background, (WIDTH, HEIGHT)) # Scaling background image to fit game window
 
-bg_y1 = 0 
-bg_y2 = -HEIGHT #Allows two copies of background to move seamlessly
-
-# Adding player spaceship
-# Load player image and create rectangle
 player_img = pygame.image.load(os.path.join("Assets", "Player.png")).convert_alpha()
-# Optionally scale player
 player_img = pygame.transform.scale(player_img, (64, 64))
+
+# 4B. Loading laser asset and sound effect
+shoot_sound = pygame.mixer.Sound(os.path.join("Assets", "Retro Laser.mp3")) #Loading laser sound effect
+
+
+# 5. Player Setup
 player_rect = player_img.get_rect()
-# Start player near the bottom center
 player_rect.centerx = WIDTH // 2
 player_rect.bottom = HEIGHT - 30
 player_speed = 5
 
+# 6. Scrolling Background Setup
+bg_y1 = 0 
+bg_y2 = -HEIGHT #Allows two copies of background to move seamlessly
 
+#7. Laser Setup
+laser_img = pygame.image.load(os.path.join("Assets", "Laser.png")).convert_alpha()
+laser_img = pygame. transform.scale(laser_img, (8,24))
+lasers =[] #List to hold all active lasers
+laser_speed = 8 
+
+# 8. Game Loop
 # Adding the game loop
 running = True #This runs the game loop
 while running:
+
+    #Event Handling:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False # Allows you to click "x" to close the game window
 
+        #Shoot Laser:
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                shoot_sound.play() # Play laser sound effect
 
-    #Drawing and scrolling background in game loop
-    screen.blit(background, (0, bg_y1)) 
-    screen.blit(background, (0, bg_y2)) #Drawing scrolling background
+                laser_rect = laser_img.get_rect()
+                laser_rect.centerx = player_rect.centerx
+                laser_rect.bottom = player_rect.top
+                lasers.append(laser_rect) #Adding new laser to the list of active lasers
+                
 
-
-    bg_y1 += 2 
-    bg_y2 += 2 #Moving background downwards
-
+    #Scrolling Background Movement
+    bg_y1 += 2
+    bg_y2 += 2
 
     if bg_y1 >= HEIGHT: #Resetting background position
         bg_y1 = -HEIGHT
@@ -75,8 +91,23 @@ while running:
     if player_rect.bottom > HEIGHT:
         player_rect.bottom = HEIGHT
 
+    # Moving lasers
+    for laser in lasers:
+        laser.y -= laser_speed
+
+    lasers = [laser for laser in lasers if laser.bottom > 0] #Removing lasers that go off screen
+
+
     # Drawing player 
+    screen.blit(background, (0, bg_y1)) 
+    screen.blit(background, (0, bg_y2)) #Drawing scrolling background
+
     screen.blit(player_img, player_rect)
+
+    #Drawing Lasers
+    for laser in lasers:
+        screen.blit(laser_img, laser)
+
 
     pygame.display.update() #Updating display with new background positions
 pygame.quit() 
