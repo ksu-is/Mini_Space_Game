@@ -241,12 +241,15 @@ while running:
         lasers = [l for l in lasers if l not in destroyed_lasers]
 
     # Check collisions between player and asteroids/UFOs -> game over
+    # Use smaller hitboxes for asteroids and UFOs for fairer collision
     for asteroid in asteroids:
-        if player_rect.colliderect(asteroid):
+        asteroid_hitbox = asteroid.inflate(-20, -20)  # shrink by 20px each side
+        if player_rect.colliderect(asteroid_hitbox):
             game_over = True
             break
     for ufo in ufos:
-        if player_rect.colliderect(ufo):
+        ufo_hitbox = ufo.inflate(-12, -12)  # shrink by 12px each side
+        if player_rect.colliderect(ufo_hitbox):
             game_over = True
             break
 
