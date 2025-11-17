@@ -20,6 +20,16 @@ background = pygame.transform.scale(background, (WIDTH, HEIGHT)) # Scaling backg
 player_img = pygame.image.load(os.path.join("Assets", "Player.png")).convert_alpha()
 player_img = pygame.transform.scale(player_img, (96, 96))
 
+# Play background music on loop (if available)
+bg_music_path = os.path.join("Assets", "Background Music.mp3")
+if os.path.exists(bg_music_path):
+    try:
+        pygame.mixer.music.load(bg_music_path)
+        pygame.mixer.music.set_volume(0.5)
+        pygame.mixer.music.play(-1)  # loop indefinitely
+    except Exception:
+        pass
+
 # 4B. Loading sound effect
 shoot_sound = pygame.mixer.Sound(os.path.join("Assets", "Retro Laser.mp3")) #Loading laser sound effect
 # Load UFO explosion sound (handle potential filename misspelling)
@@ -42,6 +52,18 @@ if os.path.exists(explosion_sound_path):
         explosion_sound = pygame.mixer.Sound(explosion_sound_path)
     except Exception:
         explosion_sound = None
+
+# Rock-specific explosion sound: prefer Rock Explosion names, otherwise fall back to explosion_sound
+rock_sound = None
+for name in ("Rock Explosion.mp3", "Rock_Explosion.mp3", "rock_explosion.mp3", "Explosion.mp3"):
+    path = os.path.join("Assets", name)
+    if os.path.exists(path):
+        try:
+            rock_sound = pygame.mixer.Sound(path)
+            break
+        except Exception:
+            rock_sound = None
+            break
 
 # 4C. Loading Space Rock and UFO assets
 asteroid_img = pygame.image.load(os.path.join("Assets", "Space Rock.png")).convert_alpha()
@@ -260,6 +282,12 @@ while running:
                 # create explosion rect centered on asteroid (small explosion)
                 exp_rect = explosion_img.get_rect()
                 exp_rect.center = asteroid.center
+                # play rock explosion sound if available
+                if rock_sound:
+                    try:
+                        rock_sound.play()
+                    except Exception:
+                        pass
                 explosions.append({"rect": exp_rect, "timer": explosion_duration, "img": explosion_img})
 
                 destroyed_asteroids.append(asteroid)
