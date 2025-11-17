@@ -41,6 +41,16 @@ explosion_large_img = pygame.transform.scale(explosion_img, (320, 320))
 explosion_img.set_colorkey((0, 0, 0))
 explosion_large_img.set_colorkey((0, 0, 0))
 
+# Spaceship-specific explosion (used when player is hit)
+# Load a dedicated spaceship explosion GIF (if present) for better visuals
+if os.path.exists(os.path.join("Assets", "Spaceship Explosion.gif")):
+    spaceship_explosion_img = pygame.image.load(os.path.join("Assets", "Spaceship Explosion.gif")).convert_alpha()
+    spaceship_explosion_img = pygame.transform.scale(spaceship_explosion_img, (200, 200))
+else:
+    # fallback to generic explosion scaled
+    spaceship_explosion_img = pygame.transform.scale(explosion_img, (160, 160))
+spaceship_explosion_img.set_colorkey((0, 0, 0))
+
 # 5. Player Setup
 player_rect = player_img.get_rect()
 player_rect.centerx = WIDTH // 2
@@ -73,6 +83,8 @@ ufo_spawn_delay = 600
 
 # Game state
 game_over = False
+player_dead = False
+player_explosion_duration = 36  # frames the ship explosion plays before game over
 
 # Fonts for UI
 font = pygame.font.SysFont(None, 72)
@@ -82,6 +94,7 @@ def reset_game():
     """Reset game state to start a new run."""
     global asteroids, ufos, lasers, explosions
     global spawn_timer, ufo_spawn_timer, bg_y1, bg_y2, game_over
+    global player_dead
 
     asteroids = []
     ufos = []
@@ -99,6 +112,7 @@ def reset_game():
     player_rect.bottom = HEIGHT - 30
 
     game_over = False
+    player_dead = False
 
 
 # 9. Spawning Asteroids
@@ -244,20 +258,29 @@ while running:
     # Use smaller hitboxes for asteroids and UFOs for fairer collision
     for asteroid in asteroids:
         asteroid_hitbox = asteroid.inflate(-20, -20)  # shrink by 20px each side
-        if player_rect.colliderect(asteroid_hitbox):
-            game_over = True
+        if player_rect.colliderect(asteroid_hitbox) and not player_dead:
+            # spawn ship explosion and mark player dead; nudge explosion upward so it centers visually
+            exp_rect = spaceship_explosion_img.get_rect()
+            exp_rect.center = (player_rect.centerx, player_rect.centery - 12)
+            explosions.append({"rect": exp_rect, "timer": player_explosion_duration, "img": spaceship_explosion_img})
+            player_dead = True
             break
     for ufo in ufos:
         ufo_hitbox = ufo.inflate(-12, -12)  # shrink by 12px each side
-        if player_rect.colliderect(ufo_hitbox):
-            game_over = True
+        if player_rect.colliderect(ufo_hitbox) and not player_dead:
+            exp_rect = spaceship_explosion_img.get_rect()
+            exp_rect.center = (player_rect.centerx, player_rect.centery - 12)
+            explosions.append({"rect": exp_rect, "timer": player_explosion_duration, "img": spaceship_explosion_img})
+            player_dead = True
             break
 
     # Drawing player 
     screen.blit(background, (0, bg_y1)) 
     screen.blit(background, (0, bg_y2)) #Drawing scrolling background
 
-    screen.blit(player_img, player_rect)
+    # Only draw the player sprite if they're not dead (exploding)
+    if not player_dead:
+        screen.blit(player_img, player_rect)
 
     #Drawing Lasers
     for laser in lasers:
@@ -280,6 +303,10 @@ while running:
         e["timer"] -= 1
         if e["timer"] > 0:
             new_explosions.append(e)
+        else:
+            # if this was the last ship-explosion, mark game_over
+            if img == spaceship_explosion_img:
+                game_over = True
     explosions = new_explosions
 
 
