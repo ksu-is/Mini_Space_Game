@@ -22,6 +22,17 @@ player_img = pygame.transform.scale(player_img, (96, 96))
 
 # 4B. Loading sound effect
 shoot_sound = pygame.mixer.Sound(os.path.join("Assets", "Retro Laser.mp3")) #Loading laser sound effect
+# Load UFO explosion sound (handle potential filename misspelling)
+ufo_sound = None
+for name in ("UFO Explosion.mp3", "UFO Exploision.mp3", "ufo_explosion.mp3"):
+    path = os.path.join("Assets", name)
+    if os.path.exists(path):
+        try:
+            ufo_sound = pygame.mixer.Sound(path)
+            break
+        except Exception:
+            ufo_sound = None
+            break
 
 # 4C. Loading Space Rock and UFO assets
 asteroid_img = pygame.image.load(os.path.join("Assets", "Space Rock.png")).convert_alpha()
@@ -50,6 +61,21 @@ else:
     # fallback to generic explosion scaled
     spaceship_explosion_img = pygame.transform.scale(explosion_img, (160, 160))
 spaceship_explosion_img.set_colorkey((0, 0, 0))
+
+# UFO-specific explosion: prefer a dedicated file if present, otherwise make a large fallback
+ufo_explosion_img = None
+ufo_png = os.path.join("Assets", "UFO Explosion.png")
+ufo_gif = os.path.join("Assets", "UFO Explosion.gif")
+if os.path.exists(ufo_png):
+    ufo_explosion_img = pygame.image.load(ufo_png).convert_alpha()
+    ufo_explosion_img = pygame.transform.scale(ufo_explosion_img, (320, 320))
+elif os.path.exists(ufo_gif):
+    ufo_explosion_img = pygame.image.load(ufo_gif).convert_alpha()
+    ufo_explosion_img = pygame.transform.scale(ufo_explosion_img, (320, 320))
+else:
+    # fallback to an even larger scaled version of the generic large explosion
+    ufo_explosion_img = pygame.transform.scale(explosion_img, (360, 360))
+ufo_explosion_img.set_colorkey((0, 0, 0))
 
 # 5. Player Setup
 player_rect = player_img.get_rect()
@@ -236,12 +262,17 @@ while running:
     for laser in lasers:
         for ufo in ufos:
             if laser.colliderect(ufo):
-                # create a much larger explosion for UFOs and nudge it slightly upward
-                exp_rect = explosion_large_img.get_rect()
-                # center the large explosion on the UFO but move up so it visually centers better
-                exp_rect.center = (ufo.centerx, ufo.centery - 24)
-                # longer duration for large explosion
-                explosions.append({"rect": exp_rect, "timer": explosion_duration * 3, "img": explosion_large_img})
+                # create a much larger explosion for UFOs using the UFO-specific image and nudge upward
+                exp_rect = ufo_explosion_img.get_rect()
+                exp_rect.center = (ufo.centerx, ufo.centery - 28)
+                # Play UFO explosion sound if available
+                if ufo_sound:
+                    try:
+                        ufo_sound.play()
+                    except Exception:
+                        pass
+                # longer duration for UFO explosion
+                explosions.append({"rect": exp_rect, "timer": int(explosion_duration * 3.5), "img": ufo_explosion_img})
                 destroyed_ufos.append(ufo)
                 destroyed_lasers.append(laser)
                 break
