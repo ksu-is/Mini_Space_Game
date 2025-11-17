@@ -28,11 +28,13 @@ asteroid_img = pygame.image.load(os.path.join("Assets", "Space Rock.png")).conve
 asteroid_img = pygame.transform.scale(asteroid_img, (64, 64))
 
 UFO_img = pygame.image.load(os.path.join("Assets", "UFO.png")).convert_alpha()
-UFO_img = pygame.transform.scale(UFO_img, (64, 48))
+UFO_img = pygame.transform.scale(UFO_img, (48, 48))
 
 # Explosion asset (shown when asteroid is destroyed)
 explosion_img = pygame.image.load(os.path.join("Assets", "Explosion.gif")).convert_alpha()
 explosion_img = pygame.transform.scale(explosion_img, (96, 96))
+# Large explosion for bigger enemies (UFOs)
+explosion_large_img = pygame.transform.scale(explosion_img, (192, 192))
 
 # 5. Player Setup
 player_rect = player_img.get_rect()
@@ -58,6 +60,11 @@ spawn_delay = 180
 
 # Explosions list stores ongoing explosion effects (rect + timer)
 explosions = []
+# UFOs
+ufos = []
+ufo_speed = 2
+ufo_spawn_timer = 0
+ufo_spawn_delay = 600
 
 
 # 9. Spawning Asteroids
@@ -132,14 +139,30 @@ while running:
         spawn_asteroid()
         spawn_timer = 0
 
+    # Spawning UFOs occasionally
+    ufo_spawn_timer += 1
+    if ufo_spawn_timer >= ufo_spawn_delay:
+        # spawn a UFO near the top
+        ufo_rect = UFO_img.get_rect()
+        ufo_rect.x = random.randint(0, WIDTH - ufo_rect.width)
+        ufo_rect.y = -ufo_rect.height
+        ufos.append(ufo_rect)
+        ufo_spawn_timer = 0
+
 
     # Moving asteroids
     for asteroid in asteroids:
         asteroid.y += asteroid_speed
         asteroid.x += random.randint(-1, 1) # Adding slight horizontal movement to asteroids
 
-    # Removing asteroids that go off screen
+    # Moving UFOs
+    for ufo in ufos:
+        ufo.y += ufo_speed
+        ufo.x += random.randint(-1, 1)
+
+    # Removing asteroids and ufos that go off screen
     asteroids = [a for a in asteroids if a.top < HEIGHT]
+    ufos = [u for u in ufos if u.top < HEIGHT]
     # ----- Collision detection: lasers hit asteroids -----
     # When a laser hits an asteroid, spawn an explosion at the asteroid's center
     # and remove both the laser and the asteroid.
@@ -159,6 +182,22 @@ while running:
                 destroyed_lasers.append(laser)
                 break  # laser destroyed, move to next laser
 
+    # Check laser collisions with UFOs (spawn larger explosion)
+    destroyed_ufos = []
+    for laser in lasers:
+        for ufo in ufos:
+            if laser.colliderect(ufo):
+                exp_rect = explosion_large_img.get_rect()
+                exp_rect.center = ufo.center
+                # longer duration for large explosion
+                explosions.append({"rect": exp_rect, "timer": explosion_duration * 2})
+                destroyed_ufos.append(ufo)
+                destroyed_lasers.append(laser)
+                break
+
+    if destroyed_ufos:
+        ufos = [u for u in ufos if u not in destroyed_ufos]
+
     if destroyed_asteroids:
         asteroids = [a for a in asteroids if a not in destroyed_asteroids]
     if destroyed_lasers:
@@ -177,6 +216,10 @@ while running:
     #Drawing Asteroids
     for asteroid in asteroids:
         screen.blit(asteroid_img, asteroid)
+
+    # Drawing UFOs
+    for ufo in ufos:
+        screen.blit(UFO_img, ufo)
 
     # Draw and update explosions (show on top of asteroids)
     new_explosions = []
