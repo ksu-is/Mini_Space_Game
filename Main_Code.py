@@ -33,8 +33,8 @@ UFO_img = pygame.transform.scale(UFO_img, (48, 48))
 # Explosion asset (shown when asteroid is destroyed)
 explosion_img = pygame.image.load(os.path.join("Assets", "Explosion.gif")).convert_alpha()
 explosion_img = pygame.transform.scale(explosion_img, (96, 96))
-# Large explosion for bigger enemies (UFOs)
-explosion_large_img = pygame.transform.scale(explosion_img, (192, 192))
+# Large explosion for bigger enemies (UFOs) - much bigger and more visible
+explosion_large_img = pygame.transform.scale(explosion_img, (320, 320))
 
 # 5. Player Setup
 player_rect = player_img.get_rect()
@@ -173,10 +173,10 @@ while running:
     for laser in lasers:
         for asteroid in asteroids:
             if laser.colliderect(asteroid):
-                # create explosion rect centered on asteroid
+                # create explosion rect centered on asteroid (small explosion)
                 exp_rect = explosion_img.get_rect()
                 exp_rect.center = asteroid.center
-                explosions.append({"rect": exp_rect, "timer": explosion_duration})
+                explosions.append({"rect": exp_rect, "timer": explosion_duration, "img": explosion_img})
 
                 destroyed_asteroids.append(asteroid)
                 destroyed_lasers.append(laser)
@@ -187,10 +187,12 @@ while running:
     for laser in lasers:
         for ufo in ufos:
             if laser.colliderect(ufo):
+                # create a much larger explosion for UFOs and nudge it slightly upward
                 exp_rect = explosion_large_img.get_rect()
-                exp_rect.center = ufo.center
+                # center the large explosion on the UFO but move up so it visually centers better
+                exp_rect.center = (ufo.centerx, ufo.centery - 24)
                 # longer duration for large explosion
-                explosions.append({"rect": exp_rect, "timer": explosion_duration * 2})
+                explosions.append({"rect": exp_rect, "timer": explosion_duration * 3, "img": explosion_large_img})
                 destroyed_ufos.append(ufo)
                 destroyed_lasers.append(laser)
                 break
@@ -224,7 +226,9 @@ while running:
     # Draw and update explosions (show on top of asteroids)
     new_explosions = []
     for e in explosions:
-        screen.blit(explosion_img, e["rect"])
+        # draw the explosion using its stored image to keep sizes correct
+        img = e.get("img", explosion_img)
+        screen.blit(img, e["rect"])
         e["timer"] -= 1
         if e["timer"] > 0:
             new_explosions.append(e)
