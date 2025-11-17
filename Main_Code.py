@@ -164,6 +164,7 @@ while running:
         screen.blit(asteroid_img, asteroid)
 
 
+
     pygame.display.update() #Updating display with new background positions
 pygame.quit() 
 
