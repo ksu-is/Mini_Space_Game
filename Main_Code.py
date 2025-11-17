@@ -71,6 +71,35 @@ ufo_speed = 2
 ufo_spawn_timer = 0
 ufo_spawn_delay = 600
 
+# Game state
+game_over = False
+
+# Fonts for UI
+font = pygame.font.SysFont(None, 72)
+small_font = pygame.font.SysFont(None, 36)
+
+def reset_game():
+    """Reset game state to start a new run."""
+    global asteroids, ufos, lasers, explosions
+    global spawn_timer, ufo_spawn_timer, bg_y1, bg_y2, game_over
+
+    asteroids = []
+    ufos = []
+    lasers = []
+    explosions = []
+
+    spawn_timer = 0
+    ufo_spawn_timer = 0
+
+    bg_y1 = 0
+    bg_y2 = -HEIGHT
+
+    # Reset player position
+    player_rect.centerx = WIDTH // 2
+    player_rect.bottom = HEIGHT - 30
+
+    game_over = False
+
 
 # 9. Spawning Asteroids
 def spawn_asteroid():
@@ -93,13 +122,14 @@ while running:
 
         #Shoot Laser:
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
+            if event.key == pygame.K_SPACE and not game_over:
                 shoot_sound.play() # Play laser sound effect
 
                 laser_rect = laser_img.get_rect()
                 laser_rect.centerx = player_rect.centerx
                 laser_rect.bottom = player_rect.top
                 lasers.append(laser_rect) #Adding new laser to the list of active lasers
+            # If game over, allow restart/quit keys handled later
                 
 
     #Scrolling Background Movement
@@ -210,6 +240,16 @@ while running:
     if destroyed_lasers:
         lasers = [l for l in lasers if l not in destroyed_lasers]
 
+    # Check collisions between player and asteroids/UFOs -> game over
+    for asteroid in asteroids:
+        if player_rect.colliderect(asteroid):
+            game_over = True
+            break
+    for ufo in ufos:
+        if player_rect.colliderect(ufo):
+            game_over = True
+            break
+
     # Drawing player 
     screen.blit(background, (0, bg_y1)) 
     screen.blit(background, (0, bg_y2)) #Drawing scrolling background
@@ -240,6 +280,35 @@ while running:
     explosions = new_explosions
 
 
+
+    # If game over, display game over screen and wait for restart or quit
+    if game_over:
+        # darken background
+        overlay = pygame.Surface((WIDTH, HEIGHT))
+        overlay.set_alpha(160)
+        overlay.fill((0, 0, 0))
+        screen.blit(overlay, (0, 0))
+
+        go_text = font.render("GAME OVER", True, (255, 30, 30))
+        go_rect = go_text.get_rect(center=(WIDTH//2, HEIGHT//2 - 40))
+        screen.blit(go_text, go_rect)
+
+        instr_text = small_font.render("Press R to restart or Q/Esc to quit", True, (255, 255, 255))
+        instr_rect = instr_text.get_rect(center=(WIDTH//2, HEIGHT//2 + 40))
+        screen.blit(instr_text, instr_rect)
+
+        pygame.display.update()
+        # Wait for input events to restart or quit
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    reset_game()
+                if event.key == pygame.K_q or event.key == pygame.K_ESCAPE:
+                    running = False
+        # skip rest of loop while waiting
+        continue
 
     pygame.display.update() #Updating display with new background positions
 pygame.quit() 
