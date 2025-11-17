@@ -134,6 +134,21 @@ while running:
     # Removing asteroids that go off screen
     asteroids = [a for a in asteroids if a.top < HEIGHT]
 
+    # ----- Collision detection: lasers hit asteroids -----
+    destroyed_asteroids = []
+    destroyed_lasers = []
+    for laser in lasers:
+        for asteroid in asteroids:
+            if laser.colliderect(asteroid):
+                destroyed_asteroids.append(asteroid)
+                destroyed_lasers.append(laser)
+                break  # laser destroyed, move to next laser
+
+    if destroyed_asteroids:
+        asteroids = [a for a in asteroids if a not in destroyed_asteroids]
+    if destroyed_lasers:
+        lasers = [l for l in lasers if l not in destroyed_lasers]
+
     # Drawing player 
     screen.blit(background, (0, bg_y1)) 
     screen.blit(background, (0, bg_y2)) #Drawing scrolling background
