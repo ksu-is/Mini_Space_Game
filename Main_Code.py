@@ -52,12 +52,6 @@ asteroid_speed = 1
 spawn_timer = 0
 spawn_delay = 180 
 
-# UFO Setup (behaves similarly to asteroids)
-ufos = []
-ufo_speed = 2
-ufo_timer = 0
-ufo_delay = 600
-
 
 # 9. Spawning Asteroids
 def spawn_asteroid():
@@ -65,16 +59,6 @@ def spawn_asteroid():
     asteroid_rect.x = random.randint(0, WIDTH - asteroid_rect.width)
     asteroid_rect.y = -64
     asteroids.append(asteroid_rect)  
-
-
-def spawn_ufo():
-    ufo_rect = UFO_img.get_rect()
-    ufo_rect.x = random.randint(0, WIDTH - ufo_rect.width)
-    ufo_rect.y = -ufo_rect.height
-    # Give UFO a slight horizontal velocity so it can drift
-    vx = random.randint(-2, 2)
-    # Store as [rect, vx] so we can update both position and horizontal speed
-    ufos.append([ufo_rect, vx])
 
 
 
@@ -141,12 +125,6 @@ while running:
         spawn_asteroid()
         spawn_timer = 0
 
-    # Spawning UFOs (less frequent)
-    ufo_timer += 1
-    if ufo_timer >= ufo_delay:
-        spawn_ufo()
-        ufo_timer = 0
-
 
     # Moving asteroids
     for asteroid in asteroids:
@@ -156,13 +134,20 @@ while running:
     # Removing asteroids that go off screen
     asteroids = [a for a in asteroids if a.top < HEIGHT]
 
-    # Moving UFOs
-    for u in ufos:
-        u[0].y += ufo_speed
-        u[0].x += u[1]
+    # ----- Collision detection: lasers hit asteroids -----
+    destroyed_asteroids = []
+    destroyed_lasers = []
+    for laser in lasers:
+        for asteroid in asteroids:
+            if laser.colliderect(asteroid):
+                destroyed_asteroids.append(asteroid)
+                destroyed_lasers.append(laser)
+                break  # laser destroyed, move to next laser
 
-    # Removing UFOs that go off screen
-    ufos = [u for u in ufos if u[0].top < HEIGHT and u[0].right > 0 and u[0].left < WIDTH]
+    if destroyed_asteroids:
+        asteroids = [a for a in asteroids if a not in destroyed_asteroids]
+    if destroyed_lasers:
+        lasers = [l for l in lasers if l not in destroyed_lasers]
 
     # Drawing player 
     screen.blit(background, (0, bg_y1)) 
@@ -178,9 +163,6 @@ while running:
     for asteroid in asteroids:
         screen.blit(asteroid_img, asteroid)
 
-    #Drawing UFOs
-    for ufo, vx in ufos:
-        screen.blit(UFO_img, ufo)
 
 
     pygame.display.update() #Updating display with new background positions
