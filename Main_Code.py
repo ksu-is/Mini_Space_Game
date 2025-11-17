@@ -36,6 +36,11 @@ explosion_img = pygame.transform.scale(explosion_img, (96, 96))
 # Large explosion for bigger enemies (UFOs) - much bigger and more visible
 explosion_large_img = pygame.transform.scale(explosion_img, (320, 320))
 
+# Make the black background of the explosion images transparent so they don't cover other sprites
+# Some GIFs don't include proper alpha; using a color key for black (0,0,0) will remove the black border.
+explosion_img.set_colorkey((0, 0, 0))
+explosion_large_img.set_colorkey((0, 0, 0))
+
 # 5. Player Setup
 player_rect = player_img.get_rect()
 player_rect.centerx = WIDTH // 2
