@@ -20,9 +20,15 @@ background = pygame.transform.scale(background, (WIDTH, HEIGHT)) # Scaling backg
 player_img = pygame.image.load(os.path.join("Assets", "Player.png")).convert_alpha()
 player_img = pygame.transform.scale(player_img, (64, 64))
 
-# 4B. Loading laser asset and sound effect
+# 4B. Loading sound effect
 shoot_sound = pygame.mixer.Sound(os.path.join("Assets", "Retro Laser.mp3")) #Loading laser sound effect
 
+# 4C. Loading Space Rock and UFO assets
+asteroid_img = pygame.image.load(os.path.join("Assets", "Space Rock.png")).convert_alpha()
+asteroid_img = pygame.transform.scale(asteroid_img, (64, 64))
+
+UFO_img = pygame.image.load(os.path.join("Assets", "UFO.png")).convert_alpha()
+UFO_img = pygame.transform.scale(UFO_img, (64, 48))
 
 # 5. Player Setup
 player_rect = player_img.get_rect()
@@ -40,7 +46,23 @@ laser_img = pygame. transform.scale(laser_img, (8,24))
 lasers =[] #List to hold all active lasers
 laser_speed = 8 
 
-# 8. Game Loop
+# 8. Enemy Setup
+asteroids = []
+asteroid_speed = 1 
+spawn_timer = 0
+spawn_delay = 180 
+
+
+# 9. Spawning Asteroids
+def spawn_asteroid():
+    asteroid_rect = asteroid_img.get_rect()
+    asteroid_rect.x = random.randint(0, WIDTH - asteroid_rect.width)
+    asteroid_rect.y = -64
+    asteroids.append(asteroid_rect)  
+
+
+
+# 10. Game Loop
 # Adding the game loop
 running = True #This runs the game loop
 while running:
@@ -97,6 +119,20 @@ while running:
 
     lasers = [laser for laser in lasers if laser.bottom > 0] #Removing lasers that go off screen
 
+    # Spawning asteroids
+    spawn_timer += 1
+    if spawn_timer >= spawn_delay:
+        spawn_asteroid()
+        spawn_timer = 0
+
+
+    # Moving asteroids
+    for asteroid in asteroids:
+        asteroid.y += asteroid_speed
+        asteroid.x += random.randint(-1, 1) # Adding slight horizontal movement to asteroids
+
+    # Removing asteroids that go off screen
+    asteroids = [a for a in asteroids if a.top < HEIGHT]
 
     # Drawing player 
     screen.blit(background, (0, bg_y1)) 
@@ -107,6 +143,10 @@ while running:
     #Drawing Lasers
     for laser in lasers:
         screen.blit(laser_img, laser)
+
+    #Drawing Asteroids
+    for asteroid in asteroids:
+        screen.blit(asteroid_img, asteroid)
 
 
     pygame.display.update() #Updating display with new background positions
