@@ -34,6 +34,15 @@ for name in ("UFO Explosion.mp3", "UFO Exploision.mp3", "ufo_explosion.mp3"):
             ufo_sound = None
             break
 
+# Player/asteroid explosion sound (load once)
+explosion_sound = None
+explosion_sound_path = os.path.join("Assets", "Explosion.mp3")
+if os.path.exists(explosion_sound_path):
+    try:
+        explosion_sound = pygame.mixer.Sound(explosion_sound_path)
+    except Exception:
+        explosion_sound = None
+
 # 4C. Loading Space Rock and UFO assets
 asteroid_img = pygame.image.load(os.path.join("Assets", "Space Rock.png")).convert_alpha()
 asteroid_img = pygame.transform.scale(asteroid_img, (64, 64))
@@ -293,6 +302,12 @@ while running:
             # spawn ship explosion and mark player dead; nudge explosion upward so it centers visually
             exp_rect = spaceship_explosion_img.get_rect()
             exp_rect.center = (player_rect.centerx, player_rect.centery - 12)
+            # play ship explosion sound if available
+            if explosion_sound:
+                try:
+                    explosion_sound.play()
+                except Exception:
+                    pass
             explosions.append({"rect": exp_rect, "timer": player_explosion_duration, "img": spaceship_explosion_img})
             player_dead = True
             break
@@ -301,6 +316,11 @@ while running:
         if player_rect.colliderect(ufo_hitbox) and not player_dead:
             exp_rect = spaceship_explosion_img.get_rect()
             exp_rect.center = (player_rect.centerx, player_rect.centery - 12)
+            if explosion_sound:
+                try:
+                    explosion_sound.play()
+                except Exception:
+                    pass
             explosions.append({"rect": exp_rect, "timer": player_explosion_duration, "img": spaceship_explosion_img})
             player_dead = True
             break
