@@ -18,7 +18,7 @@ background = pygame.image.load(os.path.join("Assets", "Background.png")) # Loadi
 background = pygame.transform.scale(background, (WIDTH, HEIGHT)) # Scaling background image to fit game window
 
 player_img = pygame.image.load(os.path.join("Assets", "Player.png")).convert_alpha()
-player_img = pygame.transform.scale(player_img, (64, 64))
+player_img = pygame.transform.scale(player_img, (96, 96))
 
 # 4B. Loading sound effect
 shoot_sound = pygame.mixer.Sound(os.path.join("Assets", "Retro Laser.mp3")) #Loading laser sound effect
@@ -29,6 +29,10 @@ asteroid_img = pygame.transform.scale(asteroid_img, (64, 64))
 
 UFO_img = pygame.image.load(os.path.join("Assets", "UFO.png")).convert_alpha()
 UFO_img = pygame.transform.scale(UFO_img, (64, 48))
+
+# Explosion asset (shown when asteroid is destroyed)
+explosion_img = pygame.image.load(os.path.join("Assets", "Explosion.gif")).convert_alpha()
+explosion_img = pygame.transform.scale(explosion_img, (96, 96))
 
 # 5. Player Setup
 player_rect = player_img.get_rect()
@@ -42,7 +46,7 @@ bg_y2 = -HEIGHT #Allows two copies of background to move seamlessly
 
 #7. Laser Setup
 laser_img = pygame.image.load(os.path.join("Assets", "Laser.png")).convert_alpha()
-laser_img = pygame. transform.scale(laser_img, (8,24))
+laser_img = pygame.transform.scale(laser_img, (16, 48))
 lasers =[] #List to hold all active lasers
 laser_speed = 8 
 
@@ -51,6 +55,9 @@ asteroids = []
 asteroid_speed = 1 
 spawn_timer = 0
 spawn_delay = 180 
+
+# Explosions list stores ongoing explosion effects (rect + timer)
+explosions = []
 
 
 # 9. Spawning Asteroids
@@ -133,13 +140,21 @@ while running:
 
     # Removing asteroids that go off screen
     asteroids = [a for a in asteroids if a.top < HEIGHT]
-
     # ----- Collision detection: lasers hit asteroids -----
+    # When a laser hits an asteroid, spawn an explosion at the asteroid's center
+    # and remove both the laser and the asteroid.
     destroyed_asteroids = []
     destroyed_lasers = []
+    explosion_duration = 18  # frames to show explosion
+
     for laser in lasers:
         for asteroid in asteroids:
             if laser.colliderect(asteroid):
+                # create explosion rect centered on asteroid
+                exp_rect = explosion_img.get_rect()
+                exp_rect.center = asteroid.center
+                explosions.append({"rect": exp_rect, "timer": explosion_duration})
+
                 destroyed_asteroids.append(asteroid)
                 destroyed_lasers.append(laser)
                 break  # laser destroyed, move to next laser
@@ -162,6 +177,15 @@ while running:
     #Drawing Asteroids
     for asteroid in asteroids:
         screen.blit(asteroid_img, asteroid)
+
+    # Draw and update explosions (show on top of asteroids)
+    new_explosions = []
+    for e in explosions:
+        screen.blit(explosion_img, e["rect"])
+        e["timer"] -= 1
+        if e["timer"] > 0:
+            new_explosions.append(e)
+    explosions = new_explosions
 
 
 
