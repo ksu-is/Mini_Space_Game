@@ -20,6 +20,16 @@ background = pygame.transform.scale(background, (WIDTH, HEIGHT)) # Scaling backg
 player_img = pygame.image.load(os.path.join("Assets", "Player.png")).convert_alpha()
 player_img = pygame.transform.scale(player_img, (96, 96))
 
+# Play background music on loop (if available)
+bg_music_path = os.path.join("Assets", "Background Music.mp3")
+if os.path.exists(bg_music_path):
+    try:
+        pygame.mixer.music.load(bg_music_path)
+        pygame.mixer.music.set_volume(0.5)
+        pygame.mixer.music.play(-1)  # loop indefinitely
+    except Exception:
+        pass
+
 # 4B. Loading sound effect
 shoot_sound = pygame.mixer.Sound(os.path.join("Assets", "Retro Laser.mp3")) #Loading laser sound effect
 # Load UFO explosion sound (handle potential filename misspelling)
