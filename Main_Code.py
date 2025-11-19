@@ -112,7 +112,7 @@ ufo_explosion_img.set_colorkey((0, 0, 0))
 player_rect = player_img.get_rect()
 player_rect.centerx = WIDTH // 2
 player_rect.bottom = HEIGHT - 30
-player_speed = 5
+player_speed = 3  # Reduced from 5 to make the game slightly harder
 
 # 6. Scrolling Background Setup
 bg_y1 = 0 
@@ -148,11 +148,24 @@ font = pygame.font.SysFont('Courier New', 72)
 small_font = pygame.font.SysFont('Courier New', 36)
 score_font = pygame.font.SysFont('Courier New', 32, bold=True)
 
+# --- High Score Handling ---
+# Load high score from file, if it exists
+high_score_file = os.path.join("Assets", "high_score.txt")
+if os.path.exists(high_score_file):
+    with open(high_score_file, "r") as f:
+        try:
+            high_score = int(f.read().strip())
+        except ValueError:
+            high_score = 0  # If there's a problem, reset to 0
+else:
+    high_score = 0  # No high score file, start with 0
+
 def reset_game():
     """Reset game state to start a new run."""
     global asteroids, ufos, lasers, explosions
     global spawn_timer, ufo_spawn_timer, bg_y1, bg_y2, game_over
-    global player_dead
+    global player_dead, score
+    score = 0
 
     asteroids = []
     ufos = []
@@ -209,6 +222,7 @@ def show_start_screen():
 show_start_screen()
 
 score = 0  # Player score
+high_score = 0  # Highest score in session
 
 # 10. Game Loop
 running = True #This runs the game loop
@@ -421,6 +435,10 @@ while running:
 
     # If game over, display game over screen and wait for restart or quit
     if game_over:
+        # Update high score if needed
+        if score > high_score:
+            high_score = score
+
         # darken background
         overlay = pygame.Surface((WIDTH, HEIGHT))
         overlay.set_alpha(160)
@@ -428,11 +446,19 @@ while running:
         screen.blit(overlay, (0, 0))
 
         go_text = font.render("GAME OVER", True, (255, 30, 30))
-        go_rect = go_text.get_rect(center=(WIDTH//2, HEIGHT//2 - 40))
+        go_rect = go_text.get_rect(center=(WIDTH//2, HEIGHT//2 - 80))
         screen.blit(go_text, go_rect)
 
+        score_text = small_font.render(f"Your Score: {score}", True, (255, 255, 255))
+        score_rect = score_text.get_rect(center=(WIDTH//2, HEIGHT//2))
+        screen.blit(score_text, score_rect)
+
+        high_score_text = small_font.render(f"High Score: {high_score}", True, (255, 255, 255))
+        high_score_rect = high_score_text.get_rect(center=(WIDTH//2, HEIGHT//2 + 40))
+        screen.blit(high_score_text, high_score_rect)
+
         instr_text = small_font.render("Press R to restart or Q/Esc to quit", True, (255, 255, 255))
-        instr_rect = instr_text.get_rect(center=(WIDTH//2, HEIGHT//2 + 40))
+        instr_rect = instr_text.get_rect(center=(WIDTH//2, HEIGHT//2 + 90))
         screen.blit(instr_text, instr_rect)
 
         pygame.display.update()
@@ -449,5 +475,9 @@ while running:
         continue
 
     pygame.display.update() #Updating display with new background positions
-pygame.quit() 
+pygame.quit()
+
+# Save high score to file at the end of the game
+with open(high_score_file, "w") as f:
+    f.write(str(high_score))
 
