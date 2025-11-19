@@ -139,7 +139,7 @@ laser_speed = 8
 
 # 8. Enemy Setup
 asteroids = []
-asteroid_speed = 2
+asteroid_speed = 3 
 spawn_timer = 0
 spawn_delay = 180 
 
@@ -147,7 +147,7 @@ spawn_delay = 180
 explosions = []
 # UFOs
 ufos = []
-ufo_speed = 3
+ufo_speed = 4
 ufo_spawn_timer = 0
 ufo_spawn_delay = 600
 
@@ -156,7 +156,7 @@ boss = None
 boss_speed = 3
 boss_direction = 1
 boss_health = 0
-boss_max_health = 1000
+boss_max_health = 2500
 boss_lasers = []
 boss_fire_timer = 0
 boss_fire_delay = 90  # frames between boss volleys
@@ -320,11 +320,17 @@ while running:
         ufo_spawn_timer = 0
 
     # Boss spawn check: when player reaches 5000 points, spawn the boss (if asset exists)
-    if boss is None and score >= 5000 and boss_img is not None:
+    # Only spawn boss once per game
+    boss_spawned = False
+    if 'boss_spawned' not in globals():
+        boss_spawned = False
+    if boss is None and not boss_spawned and score >= 5000 and boss_img is not None:
         boss = boss_img.get_rect()
         boss.centerx = WIDTH // 2
         boss.y = -boss.height
         boss_health = boss_max_health
+        boss_spawned = True
+        globals()['boss_spawned'] = True
         # clear minor enemies for boss intro
         asteroids = []
         ufos = []
@@ -344,20 +350,21 @@ while running:
             if boss.right >= WIDTH - 20:
                 boss_direction = -1
 
-            # Boss firing logic (two side cannons)
+            # Boss firing logic (one laser per side per volley)
             boss_fire_timer += 1
             if boss_fire_timer >= boss_fire_delay:
                 boss_fire_timer = 0
-                # left cannon
-                left_laser = laser_img.get_rect()
-                left_laser.centerx = boss.left + 36
-                left_laser.top = boss.centery
-                # right cannon
-                right_laser = laser_img.get_rect()
-                right_laser.centerx = boss.right - 36
-                right_laser.top = boss.centery
-                boss_lasers.append(left_laser)
-                boss_lasers.append(right_laser)
+                # alternate left/right cannon each volley
+                if random.choice([True, False]):
+                    left_laser = laser_img.get_rect()
+                    left_laser.centerx = boss.left + 36
+                    left_laser.top = boss.centery
+                    boss_lasers.append(left_laser)
+                else:
+                    right_laser = laser_img.get_rect()
+                    right_laser.centerx = boss.right - 36
+                    right_laser.top = boss.centery
+                    boss_lasers.append(right_laser)
                 # play boss laser sound
                 try:
                     shoot_sound.play()
