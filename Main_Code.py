@@ -156,10 +156,10 @@ boss = None
 boss_speed = 3
 boss_direction = 1
 boss_health = 0
-boss_max_health = 2500
+boss_max_health = 10000
 boss_lasers = []
 boss_fire_timer = 0
-boss_fire_delay = 90  # frames between boss volleys
+boss_fire_delay = 30  # frames between boss volleys (more frequent)
 boss_laser_speed = 6
 
 # Game state
@@ -448,12 +448,17 @@ while running:
         boss_destroyed = False
         for laser in lasers:
             if laser.colliderect(boss):
-                boss_health -= 50  # player laser deals 50 damage
+                boss_health -= 400  # player laser deals 400 damage
                 destroyed_lasers.append(laser)
                 # small explosion at hit
                 exp_rect = explosion_img.get_rect()
                 exp_rect.center = laser.center
                 explosions.append({"rect": exp_rect, "timer": 8, "img": explosion_img})
+                # Debug: print remaining boss health to console
+                try:
+                    print(f"Boss hit! Remaining HP: {boss_health}")
+                except Exception:
+                    pass
                 if boss_health <= 0:
                     boss_destroyed = True
                     break
@@ -467,6 +472,10 @@ while running:
             boss_lasers = []
             boss_spawned = True
             # After boss dies, normal gameplay resumes (asteroids/UFOs spawn again)
+
+        # Remove lasers that hit the boss so they don't damage again
+        if destroyed_lasers:
+            lasers = [l for l in lasers if l not in destroyed_lasers]
 
     # Move boss lasers
     new_boss_lasers = []
@@ -530,6 +539,9 @@ while running:
         # draw boss lasers
         for bl in boss_lasers:
             screen.blit(laser_img, bl)
+        # draw player lasers as well so shots are visible during the boss fight
+        for laser in lasers:
+            screen.blit(laser_img, laser)
         # draw boss label and health bar (Alien King)
         label = small_font.render("Alien King", True, (255, 255, 255))
         label_rect = label.get_rect(center=(WIDTH//2, 12))
