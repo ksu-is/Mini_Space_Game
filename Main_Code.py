@@ -466,6 +466,7 @@ while running:
             score += 1000
             boss = None
             boss_lasers = []
+            # After boss dies, normal gameplay resumes (asteroids/UFOs spawn again)
 
     # Move boss lasers
     new_boss_lasers = []
