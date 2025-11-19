@@ -108,6 +108,16 @@ else:
     ufo_explosion_img = pygame.transform.scale(explosion_img, (360, 360))
 ufo_explosion_img.set_colorkey((0, 0, 0))
 
+# Boss asset (optional)
+boss_img = None
+boss_path = os.path.join("Assets", "Boss Fight.GIF")
+if os.path.exists(boss_path):
+    try:
+        boss_img = pygame.image.load(boss_path).convert_alpha()
+        boss_img = pygame.transform.scale(boss_img, (320, 200))
+    except Exception:
+        boss_img = None
+
 # 5. Player Setup
 player_rect = player_img.get_rect()
 player_rect.centerx = WIDTH // 2
@@ -137,6 +147,17 @@ ufos = []
 ufo_speed = 2
 ufo_spawn_timer = 0
 ufo_spawn_delay = 600
+
+# Boss state
+boss = None
+boss_speed = 3
+boss_direction = 1
+boss_health = 0
+boss_max_health = 1000
+boss_lasers = []
+boss_fire_timer = 0
+boss_fire_delay = 90  # frames between boss volleys
+boss_laser_speed = 6
 
 # Game state
 game_over = False
@@ -295,6 +316,57 @@ while running:
         ufos.append(ufo_rect)
         ufo_spawn_timer = 0
 
+    # Boss spawn check: when player reaches 5000 points, spawn the boss (if asset exists)
+    if boss is None and score >= 5000 and boss_img is not None:
+        boss = boss_img.get_rect()
+        boss.centerx = WIDTH // 2
+        boss.y = -boss.height
+        boss_health = boss_max_health
+        # clear minor enemies for boss intro
+        asteroids = []
+        ufos = []
+        spawn_timer = 0
+        ufo_spawn_timer = 0
+
+    # If boss is active, ensure only boss is present: clear regular enemy spawning
+    if boss is not None:
+        # move boss into view until it reaches a set y position
+        if boss.y < 60:
+            boss.y += 2
+        else:
+            # Boss horizontal movement
+            boss.x += boss_direction * boss_speed
+            if boss.left <= 20:
+                boss_direction = 1
+            if boss.right >= WIDTH - 20:
+                boss_direction = -1
+
+            # Boss firing logic (two side cannons)
+            boss_fire_timer += 1
+            if boss_fire_timer >= boss_fire_delay:
+                boss_fire_timer = 0
+                # left cannon
+                left_laser = laser_img.get_rect()
+                left_laser.centerx = boss.left + 36
+                left_laser.top = boss.centery
+                # right cannon
+                right_laser = laser_img.get_rect()
+                right_laser.centerx = boss.right - 36
+                right_laser.top = boss.centery
+                boss_lasers.append(left_laser)
+                boss_lasers.append(right_laser)
+                # play boss laser sound
+                try:
+                    shoot_sound.play()
+                except Exception:
+                    pass
+
+        # while boss active, make sure regular enemies are cleared and not spawned
+        asteroids = []
+        ufos = []
+        spawn_timer = 0
+        ufo_spawn_timer = 0
+
     # Moving asteroids
     for asteroid in asteroids:
         asteroid.y += asteroid_speed
@@ -362,6 +434,48 @@ while running:
     if destroyed_lasers:
         lasers = [l for l in lasers if l not in destroyed_lasers]
 
+    # Boss: player lasers hit boss
+    if boss is not None:
+        boss_destroyed = False
+        for laser in lasers:
+            if laser.colliderect(boss):
+                boss_health -= 50  # player laser deals 50 damage
+                destroyed_lasers.append(laser)
+                # small explosion at hit
+                exp_rect = explosion_img.get_rect()
+                exp_rect.center = laser.center
+                explosions.append({"rect": exp_rect, "timer": 8, "img": explosion_img})
+                if boss_health <= 0:
+                    boss_destroyed = True
+                    break
+        if boss_destroyed:
+            # big explosion and reward
+            exp_rect = ufo_explosion_img.get_rect()
+            exp_rect.center = boss.center
+            explosions.append({"rect": exp_rect, "timer": int(explosion_duration * 4), "img": ufo_explosion_img})
+            score += 1000
+            boss = None
+            boss_lasers = []
+
+    # Move boss lasers
+    new_boss_lasers = []
+    for bl in boss_lasers:
+        bl.y += boss_laser_speed
+        # check collision with player
+        if player_rect.colliderect(bl) and not player_dead:
+            exp_rect = spaceship_explosion_img.get_rect()
+            exp_rect.center = (player_rect.centerx, player_rect.centery - 12)
+            if explosion_sound:
+                try:
+                    explosion_sound.play()
+                except Exception:
+                    pass
+            explosions.append({"rect": exp_rect, "timer": player_explosion_duration, "img": spaceship_explosion_img})
+            player_dead = True
+        elif bl.top < HEIGHT:
+            new_boss_lasers.append(bl)
+    boss_lasers = new_boss_lasers
+
     # Check collisions between player and asteroids/UFOs -> game over
     # Use smaller hitboxes for asteroids and UFOs for fairer collision
     for asteroid in asteroids:
@@ -397,21 +511,48 @@ while running:
     screen.blit(background, (0, bg_y1)) 
     screen.blit(background, (0, bg_y2)) #Drawing scrolling background
 
-    # Only draw the player sprite if they're not dead (exploding)
-    if not player_dead:
-        screen.blit(player_img, player_rect)
+    # If boss is active, display only boss and its lasers (and player)
+    if boss is not None:
+        # draw boss
+        if boss_img:
+            screen.blit(boss_img, boss)
+        # draw boss lasers
+        for bl in boss_lasers:
+            screen.blit(laser_img, bl)
+        # draw boss label and health bar (Alien King)
+        label = small_font.render("Alien King", True, (255, 255, 255))
+        label_rect = label.get_rect(center=(WIDTH//2, 12))
+        screen.blit(label, label_rect)
+        hb_w = 500
+        hb_h = 22
+        hb_x = (WIDTH - hb_w)//2
+        hb_y = 30
+        # outer border (green)
+        pygame.draw.rect(screen, (0, 180, 0), (hb_x - 2, hb_y - 2, hb_w + 4, hb_h + 4), border_radius=4)
+        # inner background (dark)
+        pygame.draw.rect(screen, (30, 30, 30), (hb_x, hb_y, hb_w, hb_h))
+        # red health fill
+        health_ratio = max(0, boss_health) / boss_max_health
+        pygame.draw.rect(screen, (200, 40, 40), (hb_x, hb_y, int(hb_w * health_ratio), hb_h))
+        # draw player as well (player can still be hit)
+        if not player_dead:
+            screen.blit(player_img, player_rect)
+    else:
+        # Only draw the player sprite if they're not dead (exploding)
+        if not player_dead:
+            screen.blit(player_img, player_rect)
 
-    #Drawing Lasers
-    for laser in lasers:
-        screen.blit(laser_img, laser)
+        #Drawing Lasers
+        for laser in lasers:
+            screen.blit(laser_img, laser)
 
-    #Drawing Asteroids
-    for asteroid in asteroids:
-        screen.blit(asteroid_img, asteroid)
+        #Drawing Asteroids
+        for asteroid in asteroids:
+            screen.blit(asteroid_img, asteroid)
 
-    # Drawing UFOs
-    for ufo in ufos:
-        screen.blit(UFO_img, ufo)
+        # Drawing UFOs
+        for ufo in ufos:
+            screen.blit(UFO_img, ufo)
 
     # Draw and update explosions (show on top of asteroids)
     new_explosions = []
