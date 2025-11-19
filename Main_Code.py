@@ -321,7 +321,7 @@ while running:
 
     # Boss spawn check: when player reaches 5000 points, spawn the boss (if asset exists)
     # Only spawn boss once per game
-    boss_spawned = False
+    global boss_spawned
     if 'boss_spawned' not in globals():
         boss_spawned = False
     if boss is None and not boss_spawned and score >= 5000 and boss_img is not None:
@@ -330,7 +330,6 @@ while running:
         boss.y = -boss.height
         boss_health = boss_max_health
         boss_spawned = True
-        globals()['boss_spawned'] = True
         # clear minor enemies for boss intro
         asteroids = []
         ufos = []
@@ -466,6 +465,7 @@ while running:
             score += 1000
             boss = None
             boss_lasers = []
+            boss_spawned = True
             # After boss dies, normal gameplay resumes (asteroids/UFOs spawn again)
 
     # Move boss lasers
