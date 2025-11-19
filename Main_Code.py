@@ -181,11 +181,35 @@ def spawn_asteroid():
 
 
 
+
+# --- Start Screen Implementation ---
+def show_start_screen():
+    waiting = True
+    while waiting:
+        screen.blit(background, (0, 0))
+        title_text = font.render("SPACE SHOOTER", True, (255, 255, 80))
+        title_rect = title_text.get_rect(center=(WIDTH//2, HEIGHT//2 - 60))
+        screen.blit(title_text, title_rect)
+
+        instr_text = small_font.render("Press SPACE to start", True, (255, 255, 255))
+        instr_rect = instr_text.get_rect(center=(WIDTH//2, HEIGHT//2 + 20))
+        screen.blit(instr_text, instr_rect)
+
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    waiting = False
+
+# Show start screen before game loop
+show_start_screen()
+
 # 10. Game Loop
-# Adding the game loop
 running = True #This runs the game loop
 while running:
-
     #Event Handling:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -201,7 +225,6 @@ while running:
                 laser_rect.bottom = player_rect.top
                 lasers.append(laser_rect) #Adding new laser to the list of active lasers
             # If game over, allow restart/quit keys handled later
-                
 
     #Scrolling Background Movement
     bg_y1 += 2
@@ -254,7 +277,6 @@ while running:
         ufo_rect.y = -ufo_rect.height
         ufos.append(ufo_rect)
         ufo_spawn_timer = 0
-
 
     # Moving asteroids
     for asteroid in asteroids:
@@ -387,8 +409,6 @@ while running:
             if img == spaceship_explosion_img:
                 game_over = True
     explosions = new_explosions
-
-
 
     # If game over, display game over screen and wait for restart or quit
     if game_over:
