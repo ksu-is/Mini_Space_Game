@@ -144,8 +144,9 @@ player_dead = False
 player_explosion_duration = 36  # frames the ship explosion plays before game over
 
 # Fonts for UI
-font = pygame.font.SysFont(None, 72)
-small_font = pygame.font.SysFont(None, 36)
+font = pygame.font.SysFont('Courier New', 72)
+small_font = pygame.font.SysFont('Courier New', 36)
+score_font = pygame.font.SysFont('Courier New', 32, bold=True)
 
 def reset_game():
     """Reset game state to start a new run."""
@@ -206,6 +207,8 @@ def show_start_screen():
 
 # Show start screen before game loop
 show_start_screen()
+
+score = 0  # Player score
 
 # 10. Game Loop
 running = True #This runs the game loop
@@ -311,7 +314,7 @@ while running:
                     except Exception:
                         pass
                 explosions.append({"rect": exp_rect, "timer": explosion_duration, "img": explosion_img})
-
+                score += 50  # Add 50 points for asteroid
                 destroyed_asteroids.append(asteroid)
                 destroyed_lasers.append(laser)
                 break  # laser destroyed, move to next laser
@@ -332,6 +335,7 @@ while running:
                         pass
                 # longer duration for UFO explosion
                 explosions.append({"rect": exp_rect, "timer": int(explosion_duration * 3.5), "img": ufo_explosion_img})
+                score += 200  # Add 200 points for UFO
                 destroyed_ufos.append(ufo)
                 destroyed_lasers.append(laser)
                 break
@@ -409,6 +413,11 @@ while running:
             if img == spaceship_explosion_img:
                 game_over = True
     explosions = new_explosions
+
+    # Draw score at bottom right
+    score_text = score_font.render(f"Score: {score}", True, (255, 255, 255))
+    score_rect = score_text.get_rect(bottomright=(WIDTH - 20, HEIGHT - 20))
+    screen.blit(score_text, score_rect)
 
     # If game over, display game over screen and wait for restart or quit
     if game_over:
