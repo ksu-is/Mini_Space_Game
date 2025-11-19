@@ -6,6 +6,9 @@ import os # Importing os module to load files from assets folder
 #2. Initializers
 pygame.init() # This line starts the pygame module
 pygame.mixer.init() # This line starts the mixer module for sound effects
+# Frame rate control
+clock = pygame.time.Clock()
+FPS = 120
 
 # 3. Setting up the game window dimensions and title
 WIDTH = 800
@@ -136,7 +139,7 @@ laser_speed = 8
 
 # 8. Enemy Setup
 asteroids = []
-asteroid_speed = 1 
+asteroid_speed = 2
 spawn_timer = 0
 spawn_delay = 180 
 
@@ -144,7 +147,7 @@ spawn_delay = 180
 explosions = []
 # UFOs
 ufos = []
-ufo_speed = 2
+ufo_speed = 3
 ufo_spawn_timer = 0
 ufo_spawn_delay = 600
 
@@ -301,7 +304,7 @@ while running:
     lasers = [laser for laser in lasers if laser.bottom > 0] #Removing lasers that go off screen
 
     # Spawning asteroids
-    spawn_timer += 1
+    spawn_timer += 3
     if spawn_timer >= spawn_delay:
         spawn_asteroid()
         spawn_timer = 0
@@ -554,6 +557,8 @@ while running:
         for ufo in ufos:
             screen.blit(UFO_img, ufo)
 
+        # (On-screen FPS counter removed)
+
     # Draw and update explosions (show on top of asteroids)
     new_explosions = []
     for e in explosions:
@@ -616,6 +621,8 @@ while running:
         continue
 
     pygame.display.update() #Updating display with new background positions
+    # Cap the frame rate to keep gameplay consistent across machines
+    clock.tick(FPS)
 pygame.quit()
 
 # Save high score to file at the end of the game
