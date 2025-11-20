@@ -23,6 +23,9 @@ background = pygame.transform.scale(background, (WIDTH, HEIGHT)) # Scaling backg
 player_img = pygame.image.load(os.path.join("Assets", "Player.png")).convert_alpha()
 player_img = pygame.transform.scale(player_img, (96, 96))
 
+# Small life icon (use player image scaled down)
+life_icon = pygame.transform.scale(player_img, (28, 28))
+
 # Play background music on loop (if available)
 bg_music_path = os.path.join("Assets", "Background Music.mp3")
 if os.path.exists(bg_music_path):
@@ -35,6 +38,14 @@ if os.path.exists(bg_music_path):
 
 # 4B. Loading sound effect
 shoot_sound = pygame.mixer.Sound(os.path.join("Assets", "Retro Laser.mp3")) #Loading laser sound effect
+# Victory sound for boss defeat (optional)
+victory_sound = None
+victory_path = os.path.join("Assets", "Victory sound.mp3")
+if os.path.exists(victory_path):
+    try:
+        victory_sound = pygame.mixer.Sound(victory_path)
+    except Exception:
+        victory_sound = None
 # Load UFO explosion sound (handle potential filename misspelling)
 ufo_sound = None
 for name in ("UFO Explosion.mp3", "UFO Exploision.mp3", "ufo_explosion.mp3"):
@@ -156,16 +167,17 @@ boss = None
 boss_speed = 3
 boss_direction = 1
 boss_health = 0
-boss_max_health = 2500
+boss_max_health = 10000
 boss_lasers = []
 boss_fire_timer = 0
-boss_fire_delay = 90  # frames between boss volleys
+boss_fire_delay = 30  # frames between boss volleys (more frequent)
 boss_laser_speed = 6
 
 # Game state
 game_over = False
 player_dead = False
 player_explosion_duration = 36  # frames the ship explosion plays before game over
+lives = 3  # number of lives the player has
 
 # Fonts for UI
 font = pygame.font.SysFont('Courier New', 72)
@@ -205,6 +217,10 @@ def reset_game():
     # Reset player position
     player_rect.centerx = WIDTH // 2
     player_rect.bottom = HEIGHT - 30
+
+    # reset lives on new game
+    global lives
+    lives = 3
 
     game_over = False
     player_dead = False
@@ -448,12 +464,17 @@ while running:
         boss_destroyed = False
         for laser in lasers:
             if laser.colliderect(boss):
-                boss_health -= 50  # player laser deals 50 damage
+                boss_health -= 400  # player laser deals 400 damage
                 destroyed_lasers.append(laser)
                 # small explosion at hit
                 exp_rect = explosion_img.get_rect()
                 exp_rect.center = laser.center
                 explosions.append({"rect": exp_rect, "timer": 8, "img": explosion_img})
+                # Debug: print remaining boss health to console
+                try:
+                    print(f"Boss hit! Remaining HP: {boss_health}")
+                except Exception:
+                    pass
                 if boss_health <= 0:
                     boss_destroyed = True
                     break
@@ -466,7 +487,51 @@ while running:
             boss = None
             boss_lasers = []
             boss_spawned = True
-            # After boss dies, normal gameplay resumes (asteroids/UFOs spawn again)
+            # Play victory sound and show victory screen
+            try:
+                if victory_sound:
+                    victory_sound.play()
+            except Exception:
+                pass
+            # show a victory screen and wait for restart/quit
+            def show_victory_screen():
+                showing = True
+                while showing:
+                    # dim background
+                    overlay = pygame.Surface((WIDTH, HEIGHT))
+                    overlay.set_alpha(180)
+                    overlay.fill((0, 0, 0))
+                    screen.blit(overlay, (0, 0))
+                    # Use the smaller UI font so the victory text fits the screen
+                    win_text = small_font.render("CONGRATULATIONS, YOU WIN!", True, (100, 255, 100))
+                    win_rect = win_text.get_rect(center=(WIDTH//2, HEIGHT//2 - 60))
+                    screen.blit(win_text, win_rect)
+
+                    score_text = small_font.render(f"Your Score: {score}", True, (255, 255, 255))
+                    score_rect = score_text.get_rect(center=(WIDTH//2, HEIGHT//2))
+                    screen.blit(score_text, score_rect)
+
+                    instr = small_font.render("Press R to restart or Q/Esc to quit", True, (255, 255, 255))
+                    instr_rect = instr.get_rect(center=(WIDTH//2, HEIGHT//2 + 80))
+                    screen.blit(instr, instr_rect)
+
+                    pygame.display.update()
+                    for ev in pygame.event.get():
+                        if ev.type == pygame.QUIT:
+                            pygame.quit()
+                            exit()
+                        if ev.type == pygame.KEYDOWN:
+                            if ev.key == pygame.K_r:
+                                reset_game()
+                                showing = False
+                            if ev.key == pygame.K_q or ev.key == pygame.K_ESCAPE:
+                                pygame.quit()
+                                exit()
+            show_victory_screen()
+
+        # Remove lasers that hit the boss so they don't damage again
+        if destroyed_lasers:
+            lasers = [l for l in lasers if l not in destroyed_lasers]
 
     # Move boss lasers
     new_boss_lasers = []
@@ -530,6 +595,9 @@ while running:
         # draw boss lasers
         for bl in boss_lasers:
             screen.blit(laser_img, bl)
+        # draw player lasers as well so shots are visible during the boss fight
+        for laser in lasers:
+            screen.blit(laser_img, laser)
         # draw boss label and health bar (Alien King)
         label = small_font.render("Alien King", True, (255, 255, 255))
         label_rect = label.get_rect(center=(WIDTH//2, 12))
@@ -567,6 +635,15 @@ while running:
 
         # (On-screen FPS counter removed)
 
+    # Draw player lives (bottom-left)
+    try:
+        for i in range(lives):
+            lx = 8 + i * (life_icon.get_width() + 6)
+            ly = HEIGHT - life_icon.get_height() - 8
+            screen.blit(life_icon, (lx, ly))
+    except Exception:
+        pass
+
     # Draw and update explosions (show on top of asteroids)
     new_explosions = []
     for e in explosions:
@@ -577,9 +654,26 @@ while running:
         if e["timer"] > 0:
             new_explosions.append(e)
         else:
-            # if this was the last ship-explosion, mark game_over
+            # if this was the last ship-explosion, handle lives/respawn or game over
             if img == spaceship_explosion_img:
-                game_over = True
+                # player explosion finished -> lose a life
+                lives -= 1
+                if lives <= 0:
+                    game_over = True
+                else:
+                    # respawn player
+                    player_dead = False
+                    player_rect.centerx = WIDTH // 2
+                    player_rect.bottom = HEIGHT - 30
+                    # clear active player and boss lasers so player doesn't die instantly
+                    try:
+                        lasers.clear()
+                    except Exception:
+                        pass
+                    try:
+                        boss_lasers.clear()
+                    except Exception:
+                        pass
     explosions = new_explosions
 
     # Draw score at bottom right
