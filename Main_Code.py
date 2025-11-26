@@ -87,10 +87,11 @@ UFO_img = pygame.image.load(os.path.join("Assets", "UFO.png")).convert_alpha()
 UFO_img = pygame.transform.scale(UFO_img, (48, 48))
 
 # Explosion asset (shown when asteroid is destroyed)
-explosion_img = pygame.image.load(os.path.join("Assets", "Explosion.gif")).convert_alpha()
-explosion_img = pygame.transform.scale(explosion_img, (96, 96))
-# Large explosion for bigger enemies (UFOs) - much bigger and more visible
-explosion_large_img = pygame.transform.scale(explosion_img, (320, 320))
+# Load original then create scaled variants so asteroid explosions are much larger and clearer
+explosion_orig = pygame.image.load(os.path.join("Assets", "Explosion.gif")).convert_alpha()
+explosion_img = pygame.transform.scale(explosion_orig, (430, 430))
+# Large explosion for bigger enemies (UFOs) - larger and more visible
+explosion_large_img = pygame.transform.scale(explosion_orig, (500, 500))
 
 # Make the black background of the explosion images transparent so they don't cover other sprites
 # Some GIFs don't include proper alpha; using a color key for black (0,0,0) will remove the black border.
