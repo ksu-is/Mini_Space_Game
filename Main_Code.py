@@ -178,6 +178,7 @@ game_over = False
 player_dead = False
 player_explosion_duration = 36  # frames the ship explosion plays before game over
 lives = 3  # number of lives the player has
+boss_spawned = False
 
 # Fonts for UI
 font = pygame.font.SysFont('Courier New', 72)
@@ -262,7 +263,6 @@ def show_start_screen():
 show_start_screen()
 
 score = 0  # Player score
-high_score = 0  # Highest score in session
 
 # 10. Game Loop
 running = True #This runs the game loop
@@ -337,9 +337,6 @@ while running:
 
     # Boss spawn check: when player reaches 5000 points, spawn the boss (if asset exists)
     # Only spawn boss once per game
-    global boss_spawned
-    if 'boss_spawned' not in globals():
-        boss_spawned = False
     if boss is None and not boss_spawned and score >= 5000 and boss_img is not None:
         boss = boss_img.get_rect()
         boss.centerx = WIDTH // 2
